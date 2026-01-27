@@ -163,14 +163,10 @@ func (e *Executable) Start(args ...string) error {
 	e.ctxWithTimeout = ctx
 	e.ctxCancelFunc = cancel
 
-	var commandName string
-
-	// If e.Path is a relative path -> use the absolute path for launching the command, else use e.Path
-	if strings.Contains(e.Path, "/") {
-		commandName = absolutePath
-	} else {
-		commandName = e.Path
-	}
+	// Always use the resolved absolute path for reliability.
+	// This handles cases like filepath.Join(".", "hello") -> "hello"
+	// which would otherwise be treated as a command to look up in PATH.
+	commandName := absolutePath
 
 	cmd := exec.CommandContext(ctx, commandName, args...)
 	cmd.Env = getSafeEnvironmentVariables()

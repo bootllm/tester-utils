@@ -23,18 +23,20 @@ type TestRunnerStep struct {
 
 // testRunner is used to run multiple tests
 type TestRunner struct {
-	isQuiet bool // Used for anti-cheat tests, where we only want Critical logs to be emitted
-	steps   []TestRunnerStep
+	isQuiet       bool   // Used for anti-cheat tests, where we only want Critical logs to be emitted
+	submissionDir string // The directory containing the student's submission
+	steps         []TestRunnerStep
 }
 
-func NewTestRunner(steps []TestRunnerStep) TestRunner {
+func NewTestRunner(steps []TestRunnerStep, submissionDir string) TestRunner {
 	return TestRunner{
-		steps: steps,
+		steps:         steps,
+		submissionDir: submissionDir,
 	}
 }
 
-func NewQuietTestRunner(steps []TestRunnerStep) TestRunner {
-	return TestRunner{isQuiet: true, steps: steps}
+func NewQuietTestRunner(steps []TestRunnerStep, submissionDir string) TestRunner {
+	return TestRunner{isQuiet: true, steps: steps, submissionDir: submissionDir}
 }
 
 // Run runs all tests in a stageRunner
@@ -45,8 +47,9 @@ func (r TestRunner) Run(isDebug bool, executable *executable.Executable) bool {
 		}
 
 		testCaseHarness := test_case_harness.TestCaseHarness{
-			Logger:     r.getLoggerForStep(isDebug, step),
-			Executable: executable.Clone(),
+			Logger:        r.getLoggerForStep(isDebug, step),
+			SubmissionDir: r.submissionDir,
+			Executable:    executable.Clone(),
 		}
 
 		logger := testCaseHarness.Logger

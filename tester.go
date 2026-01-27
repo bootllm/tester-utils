@@ -1,7 +1,10 @@
 package tester_utils
 
 import (
+	"flag"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/bootcs-dev/tester-utils/executable"
 	"github.com/bootcs-dev/tester-utils/internal"
@@ -40,7 +43,122 @@ func newTester(env map[string]string, definition tester_definition.TesterDefinit
 	return tester, nil
 }
 
+// CLIArgs holds parsed command-line arguments
+type CLIArgs struct {
+	Stage   string // Stage slug to run (empty = run all)
+	Dir     string // Working directory (empty = current dir)
+	Help    bool   // Show help
+	Version bool   // Show version
+}
+
+// ParseArgs parses command-line arguments
+// Supports:
+//   - ./tester [stage]           # positional argument
+//   - ./tester --stage <slug>    # flag
+//   - ./tester -d <dir>          # specify directory
+func ParseArgs(args []string) CLIArgs {
+	result := CLIArgs{}
+
+	// Create a new FlagSet to avoid global state
+	fs := flag.NewFlagSet("tester", flag.ContinueOnError)
+	fs.StringVar(&result.Stage, "stage", "", "Stage slug to run")
+	fs.StringVar(&result.Stage, "s", "", "Stage slug to run (shorthand)")
+	fs.StringVar(&result.Dir, "dir", "", "Working directory")
+	fs.StringVar(&result.Dir, "d", "", "Working directory (shorthand)")
+	fs.BoolVar(&result.Help, "help", false, "Show help")
+	fs.BoolVar(&result.Help, "h", false, "Show help (shorthand)")
+	fs.BoolVar(&result.Version, "version", false, "Show version")
+	fs.BoolVar(&result.Version, "v", false, "Show version (shorthand)")
+
+	// Parse flags (ignore errors for unknown flags)
+	fs.Parse(args)
+
+	// If no --stage flag but there's a positional argument, use it as stage
+	if result.Stage == "" && fs.NArg() > 0 {
+		result.Stage = fs.Arg(0)
+	}
+
+	return result
+}
+
+// MergeArgsIntoEnv merges CLI args into env map (CLI args take precedence)
+func MergeArgsIntoEnv(args CLIArgs, env map[string]string) map[string]string {
+	result := make(map[string]string)
+	for k, v := range env {
+		result[k] = v
+	}
+
+	if args.Stage != "" {
+		result["BOOTCS_STAGE"] = args.Stage
+	}
+	if args.Dir != "" {
+		result["BOOTCS_REPOSITORY_DIR"] = args.Dir
+	}
+
+	return result
+}
+
+// Run executes the tester with command-line arguments and environment
+// This is the recommended entry point for tester main functions
+//
+// Usage:
+//
+//	os.Exit(tester_utils.Run(os.Args[1:], definition))
+func Run(args []string, definition tester_definition.TesterDefinition) int {
+	cliArgs := ParseArgs(args)
+
+	if cliArgs.Help {
+		printUsage(definition)
+		return 0
+	}
+
+	if cliArgs.Version {
+		fmt.Println("bcs100x-tester v0.1.0")
+		return 0
+	}
+
+	// Merge CLI args into environment (CLI takes precedence)
+	env := getEnvMap()
+	env = MergeArgsIntoEnv(cliArgs, env)
+
+	return RunCLI(env, definition)
+}
+
+// getEnvMap converts os.Environ() to a map
+func getEnvMap() map[string]string {
+	env := make(map[string]string)
+	for _, e := range os.Environ() {
+		pair := strings.SplitN(e, "=", 2)
+		if len(pair) == 2 {
+			env[pair[0]] = pair[1]
+		}
+	}
+	return env
+}
+
+// printUsage prints help message
+func printUsage(definition tester_definition.TesterDefinition) {
+	fmt.Println("Usage: tester [options] [stage]")
+	fmt.Println()
+	fmt.Println("Options:")
+	fmt.Println("  -s, --stage <slug>  Run a specific stage")
+	fmt.Println("  -d, --dir <path>    Set working directory (default: current dir)")
+	fmt.Println("  -h, --help          Show this help message")
+	fmt.Println("  -v, --version       Show version")
+	fmt.Println()
+	fmt.Println("Examples:")
+	fmt.Println("  tester              # Run all stages")
+	fmt.Println("  tester hello        # Run 'hello' stage")
+	fmt.Println("  tester -s hello     # Same as above")
+	fmt.Println()
+	fmt.Println("Available stages:")
+	for _, tc := range definition.TestCases {
+		fmt.Printf("  %s\n", tc.Slug)
+	}
+}
+
 // RunCLI executes the tester based on user-provided env vars
+// Deprecated: Use Run() instead for command-line argument support
 func RunCLI(env map[string]string, definition tester_definition.TesterDefinition) int {
 	random.Init()
 
@@ -99,7 +217,7 @@ func (tester Tester) getRunner() test_runner.TestRunner {
 		})
 	}
 
-	return test_runner.NewTestRunner(steps)
+	return test_runner.NewTestRunner(steps, tester.context.SubmissionDir)
 }
 
 func (tester Tester) getAntiCheatRunner() test_runner.TestRunner {
@@ -113,7 +231,7 @@ func (tester Tester) getAntiCheatRunner() test_runner.TestRunner {
 		})
 	}
 
-	return test_runner.NewQuietTestRunner(steps) // We only want Critical logs to be emitted for anti-cheat tests
+	return test_runner.NewQuietTestRunner(steps, tester.context.SubmissionDir) // We only want Critical logs to be emitted for anti-cheat tests
 }
 
 func (tester Tester) getQuietExecutable() *executable.Executable {

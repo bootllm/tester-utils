@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/bootcs-dev/tester-utils/internal"
 	"github.com/bootcs-dev/tester-utils/tester_definition"
@@ -26,7 +27,12 @@ type TesterContextTestCase struct {
 
 // TesterContext holds all flags passed in via environment variables, or from the bootcs.yml file
 type TesterContext struct {
-	ExecutablePath               string
+	// SubmissionDir is the directory containing the student's submission
+	SubmissionDir string
+
+	// ExecutablePath is the path to the executable (may be empty if ExecutableFileName is not set)
+	ExecutablePath string
+
 	IsDebug                      bool
 	TestCases                    []TesterContextTestCase
 	ShouldSkipAntiCheatTestCases bool
@@ -40,42 +46,49 @@ func (c TesterContext) Print() {
 	fmt.Println("Debug =", c.IsDebug)
 }
 
-// GetContext parses flags and returns a Context object
+// GetTesterContext parses flags and returns a Context object
+// 支持三种模式：
+// 1. BOOTCS_TEST_CASES_JSON - 完整 JSON 格式（兼容 worker 调度）
+// 2. BOOTCS_STAGE - 指定单个 stage slug（调试用）
+// 3. 无环境变量 - 运行所有测试（默认行为）
+//
+// BOOTCS_REPOSITORY_DIR 默认为当前目录 "."
 func GetTesterContext(env map[string]string, definition tester_definition.TesterDefinition) (TesterContext, error) {
 	submissionDir, ok := env["BOOTCS_REPOSITORY_DIR"]
 	if !ok {
-		return TesterContext{}, fmt.Errorf("BOOTCS_REPOSITORY_DIR env var not found")
+		// 默认为当前目录
+		submissionDir = "."
 	}
 
-	testCasesJson, ok := env["BOOTCS_TEST_CASES_JSON"]
-	if !ok {
-		return TesterContext{}, fmt.Errorf("BOOTCS_TEST_CASES_JSON env var not found")
+	var testCases []TesterContextTestCase
+	var err error
+
+	// 优先级：JSON > STAGE > 全部运行
+	if testCasesJson, ok := env["BOOTCS_TEST_CASES_JSON"]; ok {
+		// 模式1：完整 JSON 格式（兼容 worker）
+		testCases, err = parseTestCasesFromJSON(testCasesJson)
+		if err != nil {
+			return TesterContext{}, err
+		}
+	} else if stageSlug, ok := env["BOOTCS_STAGE"]; ok {
+		// 模式2：单个 stage（调试用）
+		testCases, err = buildTestCasesForStage(stageSlug, definition)
+		if err != nil {
+			return TesterContext{}, err
+		}
+	} else {
+		// 模式3：运行所有测试（默认）
+		testCases = buildTestCasesForAll(definition)
 	}
 
-	testCases := []TesterContextTestCase{}
-	if err := json.Unmarshal([]byte(testCasesJson), &testCases); err != nil {
-		return TesterContext{}, fmt.Errorf("failed to parse BOOTCS_TEST_CASES_JSON: %s", err)
+	if len(testCases) == 0 {
+		return TesterContext{}, fmt.Errorf("no test cases to run")
 	}
 
 	var shouldSkipAntiCheatTestCases = false
-
 	skipAntiCheatValue, ok := env["BOOTCS_SKIP_ANTI_CHEAT"]
 	if ok && skipAntiCheatValue == "true" {
 		shouldSkipAntiCheatTestCases = true
-	}
-
-	for _, testCase := range testCases {
-		if testCase.Slug == "" {
-			return TesterContext{}, fmt.Errorf("BOOTCS_TEST_CASES_JSON contains a test case with an empty slug")
-		}
-
-		if testCase.TesterLogPrefix == "" {
-			return TesterContext{}, fmt.Errorf("BOOTCS_TEST_CASES_JSON contains a test case with an empty tester_log_prefix")
-		}
-
-		if testCase.Title == "" {
-			return TesterContext{}, fmt.Errorf("BOOTCS_TEST_CASES_JSON contains a test case with an empty title")
-		}
 	}
 
 	newExecutablePath := path.Join(submissionDir, definition.ExecutableFileName)
@@ -100,13 +113,8 @@ func GetTesterContext(env map[string]string, definition tester_definition.Tester
 		return TesterContext{}, err
 	}
 
-	if len(testCases) == 0 {
-		return TesterContext{}, fmt.Errorf("BOOTCS_TEST_CASES is empty")
-	}
-
-	// TODO: test if executable exists?
-
 	return TesterContext{
+		SubmissionDir:                submissionDir,
 		ExecutablePath:               executablePath,
 		IsDebug:                      yamlConfig.Debug,
 		TestCases:                    testCases,
@@ -114,13 +122,81 @@ func GetTesterContext(env map[string]string, definition tester_definition.Tester
 	}, nil
 }
 
+// parseTestCasesFromJSON 从 JSON 字符串解析测试用例
+func parseTestCasesFromJSON(jsonStr string) ([]TesterContextTestCase, error) {
+	testCases := []TesterContextTestCase{}
+	if err := json.Unmarshal([]byte(jsonStr), &testCases); err != nil {
+		return nil, fmt.Errorf("failed to parse BOOTCS_TEST_CASES_JSON: %s", err)
+	}
+
+	for _, tc := range testCases {
+		if tc.Slug == "" {
+			return nil, fmt.Errorf("BOOTCS_TEST_CASES_JSON contains a test case with an empty slug")
+		}
+		if tc.TesterLogPrefix == "" {
+			return nil, fmt.Errorf("BOOTCS_TEST_CASES_JSON contains a test case with an empty tester_log_prefix")
+		}
+		if tc.Title == "" {
+			return nil, fmt.Errorf("BOOTCS_TEST_CASES_JSON contains a test case with an empty title")
+		}
+	}
+
+	return testCases, nil
+}
+
+// buildTestCasesForStage 为单个 stage 构建测试用例
+func buildTestCasesForStage(stageSlug string, definition tester_definition.TesterDefinition) ([]TesterContextTestCase, error) {
+	// 找到对应的测试用例
+	for i, tc := range definition.TestCases {
+		if tc.Slug == stageSlug {
+			return []TesterContextTestCase{
+				{
+					Slug:            tc.Slug,
+					TesterLogPrefix: fmt.Sprintf("stage-%d", i+1),
+					Title:           formatTitle(tc.Slug),
+				},
+			}, nil
+		}
+	}
+	return nil, fmt.Errorf("stage %q not found in tester definition", stageSlug)
+}
+
+// buildTestCasesForAll 为所有 stage 构建测试用例
+func buildTestCasesForAll(definition tester_definition.TesterDefinition) []TesterContextTestCase {
+	testCases := make([]TesterContextTestCase, 0, len(definition.TestCases))
+	for i, tc := range definition.TestCases {
+		testCases = append(testCases, TesterContextTestCase{
+			Slug:            tc.Slug,
+			TesterLogPrefix: fmt.Sprintf("stage-%d", i+1),
+			Title:           formatTitle(tc.Slug),
+		})
+	}
+	return testCases
+}
+
+// formatTitle 将 slug 转换为可读标题
+// "mario-less" -> "Mario Less"
+func formatTitle(slug string) string {
+	words := strings.Split(slug, "-")
+	for i, w := range words {
+		if len(w) > 0 {
+			words[i] = strings.ToUpper(w[:1]) + w[1:]
+		}
+	}
+	return strings.Join(words, " ")
+}
+
 func readFromYAML(configPath string) (yamlConfig, error) {
 	c := &yamlConfig{}
 
 	fileContents, err := os.ReadFile(configPath)
 	if err != nil {
+		// bootcs.yml is optional - return default config if not found
+		if os.IsNotExist(err) {
+			return yamlConfig{Debug: false}, nil
+		}
 		return yamlConfig{}, &internal.UserError{
-			Message: "Can't read bootcs.yml file in your repository. This is required to run tests.",
+			Message: fmt.Sprintf("Can't read bootcs.yml file: %v", err),
 		}
 	}
 

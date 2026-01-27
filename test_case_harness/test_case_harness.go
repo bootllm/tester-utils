@@ -1,31 +1,43 @@
 package test_case_harness
 
 import (
+	"os"
+	"path/filepath"
+
 	"github.com/bootcs-dev/tester-utils/executable"
 	"github.com/bootcs-dev/tester-utils/logger"
 )
 
 // TestCaseHarness is passed to your TestCase's TestFunc.
 //
-// If the program is a long-lived program that must be alive during the duration of the test (like a Redis server),
-// do something like this at the start of your test function:
+// For BootCS courses that don't use your_program.sh, use SubmissionDir directly:
+//
+//	if !harness.FileExists("hello.c") {
+//	    return fmt.Errorf("hello.c does not exist")
+//	}
+//
+// For long-lived programs (like a Redis server), use Executable:
 //
 //	if err := harness.Executable.Start(); err != nil {
 //	   return err
 //	}
 //	harness.RegisterTeardownFunc(func() { harness.Executable.Kill() })
 //
-// If the program is a script that must be executed and then checked for output (like a Git command), use it like this:
+// For scripts that run and exit (like a Git command):
 //
 //	result, err := harness.Executable.Run("cat-file", "-p", "sha")
 //	if err != nil {
 //	    return err
-//	 }
+//	}
 type TestCaseHarness struct {
 	// Logger is to be used for all logs generated from the test function.
 	Logger *logger.Logger
 
-	// Executable is the program to be tested.
+	// SubmissionDir is the directory containing the student's submission.
+	// Use this for direct file access without needing your_program.sh.
+	SubmissionDir string
+
+	// Executable is the program to be tested (may point to SubmissionDir if no ExecutableFileName).
 	Executable *executable.Executable
 
 	// teardownFuncs are run once the error has been reported to the user
@@ -44,4 +56,20 @@ func (s *TestCaseHarness) RunTeardownFuncs() {
 
 func (s *TestCaseHarness) NewExecutable() *executable.Executable {
 	return s.Executable.Clone()
+}
+
+// FilePath returns the absolute path to a file within the submission directory.
+func (s *TestCaseHarness) FilePath(relativePath string) string {
+	return filepath.Join(s.SubmissionDir, relativePath)
+}
+
+// FileExists checks if a file exists within the submission directory.
+func (s *TestCaseHarness) FileExists(relativePath string) bool {
+	_, err := os.Stat(s.FilePath(relativePath))
+	return err == nil
+}
+
+// ReadFile reads the contents of a file within the submission directory.
+func (s *TestCaseHarness) ReadFile(relativePath string) ([]byte, error) {
+	return os.ReadFile(s.FilePath(relativePath))
 }
