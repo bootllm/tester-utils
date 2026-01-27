@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/codecrafters-io/tester-utils/tester_definition"
+	"github.com/bootcs-dev/tester-utils/tester_definition"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRequiresAppDir(t *testing.T) {
 	_, err := GetTesterContext(map[string]string{
-		"CODECRAFTERS_TEST_CASES_JSON": `[{ "slug": "test", "tester_log_prefix": "test", "title": "Test"}]`,
+		"BOOTCS_TEST_CASES_JSON": `[{ "slug": "test", "tester_log_prefix": "test", "title": "Test"}]`,
 	}, tester_definition.TesterDefinition{})
 	if !assert.Error(t, err) {
 		t.FailNow()
@@ -19,7 +19,7 @@ func TestRequiresAppDir(t *testing.T) {
 
 func TestRequiresCurrentStageSlug(t *testing.T) {
 	_, err := GetTesterContext(map[string]string{
-		"CODECRAFTERS_REPOSITORY_DIR": "./test_helpers/valid_app_dir",
+		"BOOTCS_REPOSITORY_DIR": "./test_helpers/valid_app_dir",
 	}, tester_definition.TesterDefinition{})
 	if !assert.Error(t, err) {
 		t.FailNow()
@@ -28,8 +28,8 @@ func TestRequiresCurrentStageSlug(t *testing.T) {
 
 func TestSuccessParsingTestCases(t *testing.T) {
 	context, err := GetTesterContext(map[string]string{
-		"CODECRAFTERS_TEST_CASES_JSON": `[{ "slug": "test", "tester_log_prefix": "test", "title": "Test"}]`,
-		"CODECRAFTERS_REPOSITORY_DIR":  "./test_helpers/valid_app_dir",
+		"BOOTCS_TEST_CASES_JSON": `[{ "slug": "test", "tester_log_prefix": "test", "title": "Test"}]`,
+		"BOOTCS_REPOSITORY_DIR":  "./test_helpers/valid_app_dir",
 	}, tester_definition.TesterDefinition{})
 	if !assert.NoError(t, err) {
 		t.FailNow()
@@ -53,8 +53,8 @@ func TestCorrectExecutable(t *testing.T) {
 
 	for _, tt := range tests {
 		context, err := GetTesterContext(map[string]string{
-			"CODECRAFTERS_TEST_CASES_JSON": `[{ "slug": "test", "tester_log_prefix": "test", "title": "Test"}]`,
-			"CODECRAFTERS_REPOSITORY_DIR":  fmt.Sprintf("./test_helpers/%s", tt.submissionDir),
+			"BOOTCS_TEST_CASES_JSON": `[{ "slug": "test", "tester_log_prefix": "test", "title": "Test"}]`,
+			"BOOTCS_REPOSITORY_DIR":  fmt.Sprintf("./test_helpers/%s", tt.submissionDir),
 		}, tester_definition.TesterDefinition{
 			ExecutableFileName:       "your_program.sh",
 			LegacyExecutableFileName: "spawn_redis_server.sh",

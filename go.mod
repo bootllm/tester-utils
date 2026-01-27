@@ -1,4 +1,4 @@
-module github.com/codecrafters-io/tester-utils
+module github.com/bootcs-dev/tester-utils
 
 go 1.24
 

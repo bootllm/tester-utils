@@ -3,7 +3,7 @@ package testing
 import (
 	"testing"
 
-	"github.com/codecrafters-io/tester-utils/tester_definition"
+	"github.com/bootcs-dev/tester-utils/tester_definition"
 	"github.com/stretchr/testify/assert"
 
 	testingInterface "github.com/mitchellh/go-testing-interface"

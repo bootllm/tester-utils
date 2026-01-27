@@ -14,7 +14,7 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/codecrafters-io/tester-utils/linewriter"
+	"github.com/bootcs-dev/tester-utils/linewriter"
 )
 
 // Executable represents a program that can be executed
@@ -408,14 +408,14 @@ func (e *Executable) Kill() error {
 	return err
 }
 
-// getSafeEnvironmentVariables filters out environment variables starting with CODECRAFTERS_SECRET
+// getSafeEnvironmentVariables filters out environment variables starting with BOOTCS_SECRET
 func getSafeEnvironmentVariables() []string {
 	allEnvVars := os.Environ()
 	safeEnvVars := make([]string, 0, len(allEnvVars))
 
 	for _, envVar := range allEnvVars {
-		// Filter out environment variables starting with `CODECRAFTERS_SECRET`
-		if !strings.HasPrefix(envVar, "CODECRAFTERS_SECRET") {
+		// Filter out environment variables starting with `BOOTCS_SECRET`
+		if !strings.HasPrefix(envVar, "BOOTCS_SECRET") {
 			safeEnvVars = append(safeEnvVars, envVar)
 		}
 	}

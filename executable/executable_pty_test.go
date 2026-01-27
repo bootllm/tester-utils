@@ -224,15 +224,15 @@ func TestSegfaultInPty(t *testing.T) {
 	assert.Equal(t, 139, result.ExitCode)
 }
 
-func TestCodecraftersSecretEnvVarsFilteredInPty(t *testing.T) {
-	os.Setenv("CODECRAFTERS_SECRET_API_KEY", "secret-key-123")
-	os.Setenv("CODECRAFTERS_REPOSITORY_DIR", "/some/path")
+func TestBootcsSecretEnvVarsFilteredInPty(t *testing.T) {
+	os.Setenv("BOOTCS_SECRET_API_KEY", "secret-key-123")
+	os.Setenv("BOOTCS_REPOSITORY_DIR", "/some/path")
 	os.Setenv("TEST_REGULAR_VAR", "regular-value")
 
 	defer func() {
-		os.Unsetenv("CODECRAFTERS_SECRET_API_KEY")
+		os.Unsetenv("BOOTCS_SECRET_API_KEY")
 		os.Unsetenv("TEST_REGULAR_VAR")
-		os.Unsetenv("CODECRAFTERS_REPOSITORY_DIR")
+		os.Unsetenv("BOOTCS_REPOSITORY_DIR")
 	}()
 
 	e := getNewExecutableForPTYTests("env")
@@ -240,10 +240,10 @@ func TestCodecraftersSecretEnvVarsFilteredInPty(t *testing.T) {
 	assert.NoError(t, err)
 	output := string(result.Stdout)
 
-	assert.NotContains(t, output, "CODECRAFTERS_SECRET_API_KEY")
+	assert.NotContains(t, output, "BOOTCS_SECRET_API_KEY")
 	assert.NotContains(t, output, "secret-key-123")
 	assert.Contains(t, output, "TEST_REGULAR_VAR=regular-value")
-	assert.Contains(t, output, "CODECRAFTERS_REPOSITORY_DIR=/some/path")
+	assert.Contains(t, output, "BOOTCS_REPOSITORY_DIR=/some/path")
 }
 
 func TestPathResolutionWithDifferentWorkingDirInPty(t *testing.T) {

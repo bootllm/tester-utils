@@ -50,14 +50,14 @@ jobs:
 
       - name: Setup git config
         run: |
-          git config --global user.email "hello@codecrafters.io"
-          git config --global user.name "codecrafters-bot"
-          git remote set-url origin https://codecrafters-bot:${{ secrets.TESTER_FIXTURE_GENERATION_GITHUB_TOKEN }}@github.com/codecrafters-io/${{ inputs.tester_repo }}.git
+          git config --global user.email "hello@bootcs.dev"
+          git config --global user.name "bootcs-bot"
+          git remote set-url origin https://bootcs-bot:${{ secrets.TESTER_FIXTURE_GENERATION_GITHUB_TOKEN }}@github.com/bootcs-dev/${{ inputs.tester_repo }}.git
           git fetch origin ${{ github.head_ref }}
           git checkout ${{ github.head_ref }}
 
       - name: Regenerate Fixtures
-        run: CODECRAFTERS_RECORD_FIXTURES=true make test
+        run: BOOTCS_RECORD_FIXTURES=true make test
 
       - name: Update Fixtures
         run: |
