@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
@@ -80,10 +81,29 @@ func (r *Runner) WithPty() *Runner {
 // createExecutable 创建并配置 executable
 func (r *Runner) createExecutable() *executable.Executable {
 	cmdPath := r.command
-	if !filepath.IsAbs(cmdPath) && !strings.HasPrefix(cmdPath, "./") {
-		cmdPath = "./" + cmdPath
+
+	// 判断是否为本地可执行文件
+	// 1. 包含路径分隔符（如 ./hello, ../bin/test, path/to/file）
+	// 2. 或者是绝对路径
+	// 3. 或者在 workDir 中存在同名文件
+	isLocalExecutable := strings.HasPrefix(cmdPath, "./") ||
+		strings.HasPrefix(cmdPath, "../") ||
+		strings.Contains(cmdPath, "/") ||
+		filepath.IsAbs(cmdPath) ||
+		fileExistsInDir(r.workDir, cmdPath)
+
+	var fullPath string
+	if isLocalExecutable {
+		// 本地可执行文件：拼接 workDir
+		if !filepath.IsAbs(cmdPath) && !strings.HasPrefix(cmdPath, "./") {
+			cmdPath = "./" + cmdPath
+		}
+		fullPath = filepath.Join(r.workDir, cmdPath)
+	} else {
+		// 系统命令（如 python3, bash, clang）：直接传给 executable
+		// executable.resolveAbsolutePath 会通过 exec.LookPath 查找
+		fullPath = cmdPath
 	}
-	fullPath := filepath.Join(r.workDir, cmdPath)
 
 	e := executable.NewExecutable(fullPath)
 	e.WorkingDir = r.workDir
@@ -91,6 +111,13 @@ func (r *Runner) createExecutable() *executable.Executable {
 	e.ShouldUsePty = r.usePty
 
 	return e
+}
+
+// fileExistsInDir 检查文件是否存在于指定目录中
+func fileExistsInDir(dir, name string) bool {
+	path := filepath.Join(dir, name)
+	info, err := os.Stat(path)
+	return err == nil && !info.IsDir()
 }
 
 // Start 启动程序但不等待结束（交互模式）
