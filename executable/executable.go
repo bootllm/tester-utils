@@ -277,6 +277,22 @@ func (e *Executable) RunWithStdin(stdin []byte, args ...string) (ExecutableResul
 	return e.Wait()
 }
 
+// WriteStdin writes data to the process's stdin (for interactive mode).
+// The process must be started with Start() first.
+func (e *Executable) WriteStdin(data []byte) error {
+	if e.stdioHandler == nil {
+		return errors.New("process not started")
+	}
+	_, err := e.stdioHandler.GetStdin().Write(data)
+	return err
+}
+
+// SendLine writes a line to the process's stdin (for interactive mode).
+// Automatically appends a newline character.
+func (e *Executable) SendLine(line string) error {
+	return e.WriteStdin([]byte(line + "\n"))
+}
+
 // formatBytesHumanReadable formats bytes as a human-readable string (e.g., "50 MB", "2 GB")
 func formatBytesHumanReadable(bytes int64) string {
 	const (

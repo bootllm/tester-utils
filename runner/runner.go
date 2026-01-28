@@ -129,13 +129,10 @@ func (r *Runner) SendLine(input string) *Runner {
 		r.logger.Debugf("sending input %q...", input)
 	}
 
-	// 获取 stdin 并写入
-	// 注意：需要访问 executable 内部的 stdioHandler
-	// 由于 stdioHandler 是私有的，我们需要通过其他方式
-	// 暂时使用反射或修改 executable 包来暴露方法
-
-	// TODO: 需要在 executable 包添加 WriteStdin 方法
-	// 临时方案：使用 RunWithStdin 的阻塞模式
+	// 使用 executable 的 SendLine 方法发送输入
+	if err := r.executable.SendLine(input); err != nil {
+		r.err = fmt.Errorf("failed to send input: %v", err)
+	}
 
 	return r
 }

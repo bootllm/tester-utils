@@ -157,6 +157,68 @@ echo "Got: $input"
 	r.Kill()
 }
 
+func TestSendLine(t *testing.T) {
+	// 创建一个会等待输入并回显的脚本
+	tmpDir := t.TempDir()
+	script := `#!/bin/bash
+read input
+echo "Got: $input"
+`
+	createTestScript(t, tmpDir, "echo_input.sh", script)
+
+	// 测试发送输入
+	r := Run(tmpDir, "echo_input.sh").
+		WithPty().
+		Start().
+		SendLine("hello")
+
+	assert.NoError(t, r.Error(), "SendLine should succeed")
+
+	// 等待程序处理输入并退出
+	r.WaitForExit()
+
+	assert.NoError(t, r.Error())
+	assert.Contains(t, r.GetStdout(), "Got: hello")
+}
+
+func TestSendLine_NotStarted(t *testing.T) {
+	// 测试未启动时调用 SendLine
+	r := Run(".", "echo", "test").SendLine("input")
+	assert.Error(t, r.Error())
+	assert.Contains(t, r.Error().Error(), "not started")
+}
+
+func TestSendLine_ThenReject(t *testing.T) {
+	// 模拟 CS50 mario 测试: 发送无效输入，检查程序拒绝并继续等待
+	tmpDir := t.TempDir()
+	script := `#!/bin/bash
+while true; do
+    read -p "Height: " input
+    if [[ "$input" =~ ^[1-8]$ ]]; then
+        echo "Valid: $input"
+        exit 0
+    fi
+    echo "Invalid input, try again"
+done
+`
+	createTestScript(t, tmpDir, "validate_input.sh", script)
+
+	// 发送无效输入 "-1"，程序应该拒绝（继续等待）
+	r := Run(tmpDir, "validate_input.sh").
+		WithPty().
+		Start().
+		SendLine("-1").
+		Reject(200 * time.Millisecond)
+
+	assert.NoError(t, r.Error(), "program should reject -1 and continue waiting")
+
+	// 发送有效输入
+	r.SendLine("5").WaitForExit()
+
+	assert.NoError(t, r.Error())
+	assert.Contains(t, r.GetStdout(), "Valid: 5")
+}
+
 func TestReject_Failure(t *testing.T) {
 	// 创建一个立即退出的脚本
 	tmpDir := t.TempDir()
@@ -169,8 +231,8 @@ exit 0
 	// 程序不应该拒绝（它立即退出了）
 	r := Run(tmpDir, "quick_exit.sh").Start()
 
-	// 等待程序退出
-	time.Sleep(100 * time.Millisecond)
+	// 等待程序退出（需要足够时间让 IO relay 完成）
+	time.Sleep(300 * time.Millisecond)
 
 	r = r.Reject(200 * time.Millisecond)
 
