@@ -8,8 +8,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/bootcs-dev/tester-utils/internal"
-	"github.com/bootcs-dev/tester-utils/tester_definition"
+	"github.com/bootcs-cn/tester-utils/internal"
+	"github.com/bootcs-cn/tester-utils/tester_definition"
 	"gopkg.in/yaml.v2"
 )
 

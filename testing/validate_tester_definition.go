@@ -3,7 +3,7 @@ package testing
 import (
 	"os"
 
-	"github.com/bootcs-dev/tester-utils/tester_definition"
+	"github.com/bootcs-cn/tester-utils/tester_definition"
 	"github.com/mitchellh/go-testing-interface"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v2"

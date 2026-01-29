@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bootcs-dev/tester-utils/test_case_harness"
-	"github.com/bootcs-dev/tester-utils/tester_definition"
+	"github.com/bootcs-cn/tester-utils/test_case_harness"
+	"github.com/bootcs-cn/tester-utils/tester_definition"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -1,4 +1,4 @@
-module github.com/bootcs-dev/tester-utils
+module github.com/bootcs-cn/tester-utils
 
 go 1.24
 

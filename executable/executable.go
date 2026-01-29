@@ -14,7 +14,7 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/bootcs-dev/tester-utils/linewriter"
+	"github.com/bootcs-cn/tester-utils/linewriter"
 )
 
 // Executable represents a program that can be executed

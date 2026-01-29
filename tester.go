@@ -6,13 +6,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/bootcs-dev/tester-utils/executable"
-	"github.com/bootcs-dev/tester-utils/internal"
-	"github.com/bootcs-dev/tester-utils/logger"
-	"github.com/bootcs-dev/tester-utils/random"
-	"github.com/bootcs-dev/tester-utils/test_runner"
-	"github.com/bootcs-dev/tester-utils/tester_context"
-	"github.com/bootcs-dev/tester-utils/tester_definition"
+	"github.com/bootcs-cn/tester-utils/executable"
+	"github.com/bootcs-cn/tester-utils/internal"
+	"github.com/bootcs-cn/tester-utils/logger"
+	"github.com/bootcs-cn/tester-utils/random"
+	"github.com/bootcs-cn/tester-utils/test_runner"
+	"github.com/bootcs-cn/tester-utils/tester_context"
+	"github.com/bootcs-cn/tester-utils/tester_definition"
 )
 
 type Tester struct {

@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	tester_utils "github.com/bootcs-dev/tester-utils"
-	"github.com/bootcs-dev/tester-utils/stdio_mocker"
-	"github.com/bootcs-dev/tester-utils/tester_definition"
+	tester_utils "github.com/bootcs-cn/tester-utils"
+	"github.com/bootcs-cn/tester-utils/stdio_mocker"
+	"github.com/bootcs-cn/tester-utils/tester_definition"
 	"github.com/stretchr/testify/assert"
 )
 

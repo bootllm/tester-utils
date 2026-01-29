@@ -4,8 +4,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/bootcs-dev/tester-utils/executable"
-	"github.com/bootcs-dev/tester-utils/logger"
+	"github.com/bootcs-cn/tester-utils/executable"
+	"github.com/bootcs-cn/tester-utils/logger"
 )
 
 // TestCaseHarness is passed to your TestCase's TestFunc.
