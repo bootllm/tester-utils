@@ -86,6 +86,12 @@ err := runner.Run("./mario").
     Reject()
 ```
 
+## 环境变量
+
+**流式日志支持** (Worker 集成):
+
+- `BOOTCS_STREAM_LOGS=1` - 禁用颜色并将 stdout 重定向到 stderr，便于 Worker 捕获实时日志流
+
 ## 文档
 
 详细 API 文档请查看 [GoDoc](https://pkg.go.dev/github.com/bootcs-cn/tester-utils)。

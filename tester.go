@@ -13,6 +13,7 @@ import (
 	"github.com/bootcs-cn/tester-utils/test_runner"
 	"github.com/bootcs-cn/tester-utils/tester_context"
 	"github.com/bootcs-cn/tester-utils/tester_definition"
+	"github.com/fatih/color"
 )
 
 type Tester struct {
@@ -105,6 +106,14 @@ func MergeArgsIntoEnv(args CLIArgs, env map[string]string) map[string]string {
 //
 //	os.Exit(tester_utils.Run(os.Args[1:], definition))
 func Run(args []string, definition tester_definition.TesterDefinition) int {
+	// Configure streaming logs if enabled by Worker
+	// When BOOTCS_STREAM_LOGS=1, redirect stdout to stderr and disable colors
+	// This allows Worker to capture all logs through stderr for real-time streaming
+	if os.Getenv("BOOTCS_STREAM_LOGS") == "1" {
+		os.Stdout = os.Stderr // Redirect stdout to stderr
+		color.NoColor = true  // Disable ANSI color codes
+	}
+
 	cliArgs := ParseArgs(args)
 
 	if cliArgs.Help {
