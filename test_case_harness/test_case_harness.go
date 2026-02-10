@@ -4,13 +4,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/bootcs-cn/tester-utils/executable"
-	"github.com/bootcs-cn/tester-utils/logger"
+	"github.com/bootllm/tester-utils/executable"
+	"github.com/bootllm/tester-utils/logger"
 )
 
 // TestCaseHarness is passed to your TestCase's TestFunc.
 //
-// For BootCS courses that don't use your_program.sh, use SubmissionDir directly:
+// For BootLLM courses that don't use your_program.sh, use SubmissionDir directly:
 //
 //	if !harness.FileExists("hello.c") {
 //	    return fmt.Errorf("hello.c does not exist")

@@ -28,10 +28,10 @@ var randomWords = []string{
 
 // Init must be called at the start of every program.
 //
-// If BOOTCS_RANDOM_SEED is set, it will be used to generate predictable random numbers.
+// If BOOTLLM_RANDOM_SEED is set, it will be used to generate predictable random numbers.
 func Init() {
 	var source rand.Source
-	if seed := os.Getenv("BOOTCS_RANDOM_SEED"); seed != "" {
+	if seed := os.Getenv("BOOTLLM_RANDOM_SEED"); seed != "" {
 		seedInt, err := strconv.Atoi(seed)
 		if err != nil {
 			panic(err)
@@ -81,12 +81,12 @@ func RandomFloat64(min, max float64) float64 {
 	// Convert min and max to rational numbers
 	bigMin := new(big.Rat).SetFloat64(min)
 	if bigMin == nil {
-		panic("BootCS Internal Error - min boundary is not finite")
+		panic("BootLLM Internal Error - min boundary is not finite")
 	}
 
 	bigMax := new(big.Rat).SetFloat64(max)
 	if bigMax == nil {
-		panic("BootCS Internal Error - max boundary is not finite")
+		panic("BootLLM Internal Error - max boundary is not finite")
 	}
 
 	// Calculate range: max - min

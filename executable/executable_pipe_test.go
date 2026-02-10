@@ -237,15 +237,15 @@ func TestMemoryLimit(t *testing.T) {
 	}
 }
 
-func TestBootcsSecretEnvVarsFiltered(t *testing.T) {
-	os.Setenv("BOOTCS_SECRET_API_KEY", "secret-key-123")
-	os.Setenv("BOOTCS_REPOSITORY_DIR", "/some/path")
+func TestBootllmSecretEnvVarsFiltered(t *testing.T) {
+	os.Setenv("BOOTLLM_SECRET_API_KEY", "secret-key-123")
+	os.Setenv("BOOTLLM_REPOSITORY_DIR", "/some/path")
 	os.Setenv("TEST_REGULAR_VAR", "regular-value")
 
 	defer func() {
-		os.Unsetenv("BOOTCS_SECRET_API_KEY")
+		os.Unsetenv("BOOTLLM_SECRET_API_KEY")
 		os.Unsetenv("TEST_REGULAR_VAR")
-		os.Unsetenv("BOOTCS_REPOSITORY_DIR")
+		os.Unsetenv("BOOTLLM_REPOSITORY_DIR")
 	}()
 
 	e := NewExecutable("env")
@@ -253,10 +253,10 @@ func TestBootcsSecretEnvVarsFiltered(t *testing.T) {
 	assert.NoError(t, err)
 	output := string(result.Stdout)
 
-	assert.NotContains(t, output, "BOOTCS_SECRET_API_KEY")
+	assert.NotContains(t, output, "BOOTLLM_SECRET_API_KEY")
 	assert.NotContains(t, output, "secret-key-123")
 	assert.Contains(t, output, "TEST_REGULAR_VAR=regular-value")
-	assert.Contains(t, output, "BOOTCS_REPOSITORY_DIR=/some/path")
+	assert.Contains(t, output, "BOOTLLM_REPOSITORY_DIR=/some/path")
 }
 
 func TestPathResolutionWithDifferentWorkingDir(t *testing.T) {

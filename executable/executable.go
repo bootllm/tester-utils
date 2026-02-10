@@ -14,7 +14,7 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/bootcs-cn/tester-utils/linewriter"
+	"github.com/bootllm/tester-utils/linewriter"
 )
 
 // Executable represents a program that can be executed
@@ -420,14 +420,14 @@ func (e *Executable) Kill() error {
 	return err
 }
 
-// getSafeEnvironmentVariables filters out environment variables starting with BOOTCS_SECRET
+// getSafeEnvironmentVariables filters out environment variables starting with BOOTLLM_SECRET
 func getSafeEnvironmentVariables() []string {
 	allEnvVars := os.Environ()
 	safeEnvVars := make([]string, 0, len(allEnvVars))
 
 	for _, envVar := range allEnvVars {
-		// Filter out environment variables starting with `BOOTCS_SECRET`
-		if !strings.HasPrefix(envVar, "BOOTCS_SECRET") {
+		// Filter out environment variables starting with `BOOTLLM_SECRET`
+		if !strings.HasPrefix(envVar, "BOOTLLM_SECRET") {
 			safeEnvVars = append(safeEnvVars, envVar)
 		}
 	}
